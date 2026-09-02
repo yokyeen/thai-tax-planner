@@ -154,14 +154,20 @@ table.bk td:last-child{color:var(--ink); font-weight:500}
 .bigfig{padding:2px 18px 14px; display:flex; align-items:baseline; gap:8px}
 .bigfig .v{font-family:"IBM Plex Mono",monospace; font-size:34px; font-weight:500; letter-spacing:-.02em}
 .bigfig .u{font-size:13px; color:var(--muted)}
-.verdict{padding:11px 18px; font-size:13.5px; border-top:1px solid var(--line-soft); display:flex; gap:8px; align-items:baseline}
-.verdict .tag{
-  font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
-  padding:2px 6px; border-radius:3px; border:1px solid currentColor; flex:none;
-}
-.verdict.pay{color:var(--seal)} .verdict.refund{color:var(--good)}
-.verdict .txt{color:var(--ink)}
 .rows{padding:6px 18px 14px; border-top:1px solid var(--line-soft)}
+.rows.settle{padding-top:10px}
+.row.settleline{
+  margin-top:8px; padding:9px 11px; border-radius:5px; align-items:baseline;
+  background:color-mix(in srgb, currentColor 9%, transparent);
+}
+.row.settleline.pay{color:var(--seal)} .row.settleline.refund{color:var(--good)}
+.row.settleline .k{color:inherit; font-weight:600; display:flex; align-items:baseline; gap:7px}
+.row.settleline .tag{
+  font-family:"IBM Plex Mono",monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+  padding:1px 5px; border-radius:3px; border:1px solid currentColor; flex:none;
+}
+.row.settleline .v{color:inherit; font-weight:600; font-size:15px}
+.foot-note{font-size:11.5px; color:var(--muted); line-height:1.5; margin-top:9px}
 .row{display:flex; justify-content:space-between; gap:12px; padding:5px 0; font-size:13px}
 .row .k{color:var(--muted)} .row .v{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums}
 .row.strong{border-top:1px solid var(--line-soft); margin-top:5px; padding-top:8px}
@@ -274,9 +280,10 @@ footer.foot{max-width:1280px; margin:0 auto; padding:8px 20px 0; font-size:12px;
           <input type="text" inputmode="decimal" id="ssoPct" placeholder="0"></label>
         <label class="f"><span class="lb">เพดานฐานประกันสังคม<span class="cap">บาท/เดือน</span></span>
           <input type="text" inputmode="numeric" id="ssoCap" placeholder="0"></label>
-        <label class="f"><span class="lb">ภาษีถูกหักต่อเดือน<span class="cap">บาท · จากสลิป</span></span>
+        <label class="f"><span class="lb">ภาษีถูกหักต่อเดือน<span class="cap">บาท · แก้ได้</span></span>
           <input type="text" inputmode="numeric" id="whtMonthly" placeholder="0"></label>
       </div>
+      <div class="note" id="whtInputNote"></div>
     </div>
   </section>
 
@@ -311,15 +318,19 @@ footer.foot{max-width:1280px; margin:0 auto; padding:8px 20px 0; font-size:12px;
   <div class="result">
     <div class="cap">ภาษีที่ต้องเสียทั้งปี (ประมาณการ)</div>
     <div class="bigfig"><span class="v num" id="rTax">0</span><span class="u">บาท</span></div>
-    <div class="verdict" id="rVerdict"></div>
     <div class="rows">
       <div class="row"><span class="k">เงินได้พึงประเมินทั้งปี</span><span class="v" id="rGross">0</span></div>
       <div class="row"><span class="k">หักค่าใช้จ่าย 50% (สูงสุด 100,000)</span><span class="v neg" id="rExp">0</span></div>
       <div class="row"><span class="k">หักค่าลดหย่อนรวม</span><span class="v neg" id="rDed">0</span></div>
       <div class="row strong"><span class="k">เงินได้สุทธิ</span><span class="v" id="rNet">0</span></div>
       <div class="row"><span class="k">อัตราภาษีที่แท้จริง</span><span class="v" id="rEff">0%</span></div>
-      <div class="row"><span class="k">ภาษีถูกหักไว้แล้วทั้งปี</span><span class="v" id="rWht">0</span></div>
-      <div class="row"><span class="k">ควรถูกหักเดือนละ</span><span class="v" id="rPerMonth">0</span></div>
+    </div>
+    <div class="rows settle">
+      <div class="row"><span class="k" id="kWhtPast">ภาษีถูกหักไว้แล้ว</span><span class="v" id="rWhtPast">0</span></div>
+      <div class="row" id="rowWhtFuture"><span class="k" id="kWhtFuture">อีก 0 เดือนข้างหน้า</span><span class="v" id="rWhtFuture">0</span></div>
+      <div class="row strong"><span class="k">รวมถูกหักทั้งปี</span><span class="v" id="rWhtTotal">0</span></div>
+      <div class="row settleline" id="rSettle"></div>
+      <div class="foot-note" id="whtNote"></div>
     </div>
     <div class="ladder" id="ladder"></div>
     <div class="planner">
@@ -402,7 +413,7 @@ function defaults(){
     salaryNow:0, otherMonthly:0, extraIncome:0,
     bonusX:0, bonusMonth:0, bonusAmt:0,
     pvdPct:5, pvdNewPct:"", pvdChangeMonth:4,
-    ssoPct:5, ssoCap:17500, whtMonthly:0,
+    ssoPct:5, ssoCap:17500, whtMonthly:"",   /* "" = คิดเฉลี่ยจากยอดสะสมให้เอง */
     ded:{ spouse:0, child1:0, child2:0, parent:0, disabled:0, maternity:0,
           lifeIns:0, healthIns:0, parentIns:0, rmf:0, ssf:0, pension:0, nsf:0, thaiesg:0,
           homeLoan:0, eReceipt:0, otherDed:0, donateEdu:0, donateGen:0 },
@@ -463,6 +474,13 @@ function taxOf(net){
   return {tax:t, detail:det};
 }
 
+/* ---------- ภาษีหัก ณ ที่จ่ายต่อเดือน ----------
+   ค่าตั้งต้นคือค่าเฉลี่ยจากยอดสะสม (ยอดสะสม ÷ จำนวนเดือน) เติมให้ในช่องเลย
+   ถ้าผู้ใช้พิมพ์ทับ จะยึดตัวเลขที่พิมพ์ ถ้าลบจนว่าง กลับไปใช้ค่าเฉลี่ยเหมือนเดิม */
+function avgWht(){ var m=Number(S.slipMonth); return m>0 ? num(S.ytdWht)/m : 0; }
+function whtIsAuto(){ return S.whtMonthly===""||S.whtMonthly===null||S.whtMonthly===undefined; }
+function whtPerMonth(){ return whtIsAuto() ? avgWht() : num(S.whtMonthly); }
+
 /* ---------- model ---------- */
 function model(){
   var slipM=Number(S.slipMonth), remain=12-slipM;
@@ -489,12 +507,14 @@ function model(){
     futPvd += num(S.salaryNow)*r/100;
   }
   var futSso = Math.min(num(S.salaryNow), num(S.ssoCap))*num(S.ssoPct)/100*remain;
-  var futWht = num(S.whtMonthly)*remain;
+  var perMonthWht = whtPerMonth();
+  var futWht = perMonthWht*remain;
 
   return {
     slipM:slipM, remain:remain, bonusPaid:bonusPaid, bonusFuture:bonusFuture,
     pvdRate:pvdRate, pvdRateNew:pvdRateNew, hasChange:hasChange,
     changeIsPast:changeIsPast, chgM:chgM,
+    perMonthWht:perMonthWht, whtAuto:whtIsAuto(), avgWht:avgWht(),
     past:{ income:num(S.ytdIncome), pvd:num(S.ytdPvd), sso:num(S.ytdSso), wht:num(S.ytdWht) },
     fut:{ salary:futSalary, other:futOther, extra:futExtra, bonus:bonusFuture,
           income:futSalary+futOther+futExtra+bonusFuture, pvd:futPvd, sso:futSso, wht:futWht }
@@ -565,6 +585,7 @@ var KIND={
 };
 function syncInputs(){
   for(var id in KIND) $(id).value = shown(S[id], KIND[id]);
+  if(whtIsAuto()) $("whtMonthly").value = shown(Math.round(avgWht()), "money");
   ["slipMonth","bonusMonth","pvdChangeMonth","extra"].forEach(function(id){ $(id).value=S[id]; });
 }
 
@@ -763,9 +784,66 @@ function renderPvdNote(res){
     +'(เงินก้อนนี้ยังเป็นของคุณ แค่ถอนได้ตอนออกจากงาน) — กรอกสองช่องข้างบนเพื่อคิดรวมในประมาณการ';
 }
 
+/* ---------- สรุปภาษีหัก ณ ที่จ่าย และยอดที่ต้องเคลียร์ตอนยื่นแบบ ---------- */
+function renderSettlement(res){
+  var M=res.M;
+
+  $("kWhtPast").textContent = "ภาษีถูกหักไว้แล้ว สะสม "+M.slipM+" เดือน";
+  $("rWhtPast").textContent = fmt(M.past.wht);
+
+  var rowFut=$("rowWhtFuture");
+  if(M.remain>0){
+    rowFut.style.display="";
+    $("kWhtFuture").innerHTML = M.whtAuto
+      ? "อีก "+M.remain+" เดือน ถ้าหักเฉลี่ยเท่าเดิม"
+        + '<br><span style="opacity:.75">เดือนละ '+fmt(M.perMonthWht)+' บาท</span>'
+      : "อีก "+M.remain+" เดือน เดือนละ "+fmt(M.perMonthWht);
+    $("rWhtFuture").textContent = "+"+fmt(M.fut.wht);
+  } else {
+    rowFut.style.display="none";
+  }
+  $("rWhtTotal").textContent = fmt(res.wht);
+
+  var diff = res.tax-res.wht, s=$("rSettle");
+  if(diff>=0){
+    s.className="row settleline pay";
+    s.innerHTML='<span class="k"><span class="tag">จ่ายเพิ่ม</span>ต้องจ่ายเพิ่มตอนยื่นแบบ</span>'
+      +'<span class="v num">'+fmt(diff)+'</span>';
+  } else {
+    s.className="row settleline refund";
+    s.innerHTML='<span class="k"><span class="tag">ขอคืน</span>ขอคืนภาษีได้</span>'
+      +'<span class="v num">'+fmt(-diff)+'</span>';
+  }
+
+  /* เตือนว่าตัวเลขนี้คือกรณีบริษัทหักเท่าเดิมไปจนสิ้นปี ซึ่งมักหักหนักขึ้นปลายปี */
+  var note=$("whtNote");
+  if(M.remain>0 && M.whtAuto && diff>0 && M.past.wht>0){
+    note.innerHTML='คิดแบบบริษัทหักเท่าเดิมไปจนสิ้นปี ยอดจริงมักน้อยกว่านี้ '
+      +'เพราะบริษัทคำนวณใหม่เมื่อเงินเดือนเปลี่ยนหรือมีโบนัส แล้วเร่งหักช่วงปลายปีให้ครบ '
+      +'อ่านเลขนี้เป็นกรณีแย่ที่สุดเพื่อกันเงินไว้ล่วงหน้า';
+  } else if(M.remain>0 && !M.whtAuto){
+    note.innerHTML='คิดจากยอดที่คุณกรอกเอง เดือนละ '+fmt(M.perMonthWht)+' บาท';
+  } else { note.innerHTML=""; }
+}
+
+function renderWhtInput(res){
+  var M=res.M, el=$("whtMonthly"), note=$("whtInputNote");
+  if(M.whtAuto && document.activeElement!==el) el.value = shown(Math.round(M.avgWht), "money");
+  if(M.whtAuto){
+    note.className="note";
+    note.innerHTML = M.past.wht>0
+      ? 'ใส่ค่าเฉลี่ยจากสลิปให้แล้ว (ภาษีหักสะสม '+fmt(M.past.wht)+' ÷ '+M.slipM+' เดือน = <b>'+fmt(M.avgWht)+'</b> บาท/เดือน) แก้ทับได้ถ้ารู้ยอดจริง'
+      : 'กรอกยอดภาษีหักสะสมด้านบนก่อน แล้วระบบจะใส่ค่าเฉลี่ยต่อเดือนให้อัตโนมัติ';
+  } else {
+    note.className="note ok";
+    note.innerHTML='ใช้ยอดที่คุณกรอกเอง <b>'+fmt(num(S.whtMonthly))+'</b> บาท/เดือน '
+      +'· ลบให้ว่างเพื่อกลับไปใช้ค่าเฉลี่ย '+fmt(M.avgWht)+' บาท';
+  }
+}
+
 function render(){
   var res=compute();
-  renderChecks(res); renderBonusNote(res); renderBreakdown(res); renderPvdNote(res);
+  renderChecks(res); renderBonusNote(res); renderBreakdown(res); renderPvdNote(res); renderWhtInput(res);
 
   $("rTax").textContent=fmt(res.tax);
   $("rGross").textContent=fmt(res.gross);
@@ -773,14 +851,7 @@ function render(){
   $("rDed").textContent="−"+fmt(res.ded);
   $("rNet").textContent=fmt(res.net);
   $("rEff").textContent=(res.gross>0?(res.tax/res.gross*100):0).toFixed(2)+"%";
-  $("rWht").textContent=fmt(res.wht);
-  $("rPerMonth").textContent=fmt(res.tax/12);
-
-  var diff=res.tax-res.wht, v=$("rVerdict");
-  if(diff>=0){ v.className="verdict pay";
-    v.innerHTML='<span class="tag">จ่ายเพิ่ม</span><span class="txt">ต้องจ่ายเพิ่มตอนยื่นแบบ <b class="num">'+fmt(diff)+'</b> บาท</span>'; }
-  else { v.className="verdict refund";
-    v.innerHTML='<span class="tag">ขอคืน</span><span class="txt">ขอคืนภาษีได้ <b class="num">'+fmt(-diff)+'</b> บาท</span>'; }
+  renderSettlement(res);
 
   var marg=renderLadder(res);
   renderHeadroom(res);
@@ -821,9 +892,10 @@ render();
 
 ["slipMonth","bonusMonth","pvdChangeMonth","extra"].forEach(function(id){ bind(id); });
 
-/* ช่องตัวเลขทั้งหมด — salaryNow กับ bonusX คำนวณยอดโบนัสใหม่ทุกครั้งที่แก้ */
+/* ช่องตัวเลขทั้งหมด — salaryNow กับ bonusX คำนวณยอดโบนัสใหม่ทุกครั้งที่แก้
+   ยกเว้นสองช่องที่ "ว่าง" มีความหมายต่างจากเลข 0 จึงผูกแยก */
 for(var kid in KIND){
-  if(kid==="pvdNewPct") continue;               /* เว้นว่าง = ไม่เปลี่ยนอัตรา ต้องแยกจากเลข 0 */
+  if(kid==="pvdNewPct" || kid==="whtMonthly") continue;
   (function(id){
     wireNum($(id), KIND[id],
       function(){ return S[id]; },
@@ -831,9 +903,14 @@ for(var kid in KIND){
       (id==="salaryNow"||id==="bonusX") ? syncBonus : null);
   })(kid);
 }
+/* ว่าง = ไม่เปลี่ยนอัตรา */
 wireNum($("pvdNewPct"), "dec",
   function(){ return S.pvdNewPct===""? 0 : S.pvdNewPct; },
   function(v){ S.pvdNewPct=v; }, null, "");
+/* ว่าง = กลับไปใช้ค่าเฉลี่ยจากยอดสะสม */
+wireNum($("whtMonthly"), "money",
+  function(){ return whtIsAuto()? Math.round(avgWht()) : S.whtMonthly; },
+  function(v){ S.whtMonthly=v; }, null, "");
 
 $("resetBtn").addEventListener("click", function(){
   if(!confirm("ล้างข้อมูลทั้งหมดและเริ่มใหม่?")) return;

@@ -404,9 +404,12 @@ var LS="thai-tax-planner-v2";
 var PVD_MAX_PCT=15;          /* เพดานบริษัท = เพดานกฎหมาย 15% ของค่าจ้าง */
 var S=null;
 
+var SCHEMA=3;   /* ขยับเลขนี้เมื่อความหมายของค่าที่บันทึกไว้เปลี่ยน แล้วเพิ่ม migrate ด้านล่าง */
+
 function defaults(){
   var now=new Date();
   return {
+    ver: SCHEMA,
     taxYear: now.getFullYear()+543,
     slipMonth: Math.max(1, now.getMonth()),
     ytdIncome:0, ytdPvd:0, ytdSso:0, ytdWht:0,
@@ -420,9 +423,20 @@ function defaults(){
     extra:0
   };
 }
+/* ปรับข้อมูลเก่าที่บันทึกไว้ก่อนหน้า ต้องทำก่อนเติมค่าตั้งต้น ไม่งั้น ver จะถูกเติมจนตรวจไม่ได้ */
+function migrate(o){
+  var v = o.ver || 0;
+  if(v < 3){
+    /* เดิม whtMonthly มีค่าตั้งต้นเป็นเลข 0 พอเปลี่ยนให้ "ว่าง = คิดเฉลี่ยให้"
+       ของเก่าเลยถูกอ่านเป็น "ผู้ใช้ตั้งใจกรอก 0" แล้วไม่เฉลี่ยให้ */
+    if(o.whtMonthly === 0) o.whtMonthly = "";
+  }
+  o.ver = SCHEMA;
+  return o;
+}
 function load(){
   try{ var r=localStorage.getItem(LS);
-    if(r){ var o=JSON.parse(r), d=defaults(), k;
+    if(r){ var o=migrate(JSON.parse(r)), d=defaults(), k;
       for(k in d) if(!(k in o)) o[k]=d[k];
       for(k in d.ded) if(!(k in o.ded)) o.ded[k]=d.ded[k];
       return o; } }catch(e){}

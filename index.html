@@ -81,17 +81,17 @@ select,input,button,textarea{font:inherit; color:inherit}
 label.f{display:flex; flex-direction:column; gap:5px; font-size:13px; color:var(--muted); min-width:0}
 label.f > span.lb{display:flex; align-items:baseline; gap:6px}
 label.f .cap{font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--muted); opacity:.8; margin-left:auto}
-input[type=number],input[type=text],select,textarea{
+input[type=text],select{
   background:var(--field); border:1px solid var(--line); border-radius:5px; padding:7px 9px;
   width:100%; min-width:0; color:var(--ink); transition:border-color .12s, box-shadow .12s;
 }
-input[type=number]{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; text-align:right}
+input[inputmode]{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; text-align:right}
+input::placeholder{color:var(--muted); opacity:.4; font-family:"IBM Plex Mono",monospace}
+input:disabled{opacity:.85; cursor:default}
 select{text-align:left; font-family:inherit}
 input:focus-visible,select:focus-visible,button:focus-visible{
   outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);
 }
-input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-input[type=number]{-moz-appearance:textfield}
 .chk{display:flex; align-items:center; gap:9px; font-size:13.5px; color:var(--ink); padding:6px 0}
 .chk input{accent-color:var(--accent); width:16px; height:16px}
 input.ytd{background:var(--accent-soft); border-color:var(--accent); font-weight:500}
@@ -216,17 +216,17 @@ footer.foot{max-width:1280px; margin:0 auto; padding:8px 20px 0; font-size:12px;
         <label class="f"><span class="lb">สลิปเดือน<span class="cap">งวด 21/7–20/8 = ส.ค.</span></span>
           <select id="slipMonth"></select></label>
         <label class="f"><span class="lb">ปีภาษี<span class="cap">พ.ศ.</span></span>
-          <input type="number" id="taxYear" step="1"></label>
+          <input type="text" inputmode="numeric" id="taxYear"></label>
       </div>
       <div class="grid4" style="margin-top:14px">
         <label class="f"><span class="lb">รายได้สะสม<span class="cap">บาท</span></span>
-          <input type="number" id="ytdIncome" step="1" class="ytd"></label>
+          <input type="text" inputmode="numeric" id="ytdIncome" class="ytd" placeholder="0"></label>
         <label class="f"><span class="lb">กองทุนสำรองเลี้ยงชีพสะสม<span class="cap">บาท</span></span>
-          <input type="number" id="ytdPvd" step="1" class="ytd"></label>
+          <input type="text" inputmode="numeric" id="ytdPvd" class="ytd" placeholder="0"></label>
         <label class="f"><span class="lb">ประกันสังคมสะสม<span class="cap">บาท</span></span>
-          <input type="number" id="ytdSso" step="1" class="ytd"></label>
+          <input type="text" inputmode="numeric" id="ytdSso" class="ytd" placeholder="0"></label>
         <label class="f"><span class="lb">ภาษีหักสะสม<span class="cap">บาท</span></span>
-          <input type="number" id="ytdWht" step="1" class="ytd"></label>
+          <input type="text" inputmode="numeric" id="ytdWht" class="ytd" placeholder="0"></label>
       </div>
       <div class="note" id="sanity"></div>
     </div>
@@ -239,30 +239,30 @@ footer.foot{max-width:1280px; margin:0 auto; padding:8px 20px 0; font-size:12px;
     <div class="bd">
       <div class="grid3">
         <label class="f"><span class="lb">เงินเดือนปัจจุบัน<span class="cap">บาท/เดือน</span></span>
-          <input type="number" id="salaryNow" step="1"></label>
+          <input type="text" inputmode="numeric" id="salaryNow" placeholder="0"></label>
         <label class="f"><span class="lb">รายได้อื่นประจำ<span class="cap">บาท/เดือน</span></span>
-          <input type="number" id="otherMonthly" step="1"></label>
+          <input type="text" inputmode="numeric" id="otherMonthly" placeholder="0"></label>
         <label class="f"><span class="lb">รายได้พิเศษที่จะได้อีก<span class="cap">บาท</span></span>
-          <input type="number" id="extraIncome" step="1"></label>
+          <input type="text" inputmode="numeric" id="extraIncome" placeholder="0"></label>
       </div>
 
       <div class="subhead">โบนัส</div>
       <div class="grid3">
         <label class="f"><span class="lb">โบนัส<span class="cap">เท่าของเงินเดือน</span></span>
-          <input type="number" id="bonusX" step="0.1"></label>
+          <input type="text" inputmode="decimal" id="bonusX" placeholder="0"></label>
         <label class="f"><span class="lb">จ่ายเดือน</span>
           <select id="bonusMonth"></select></label>
         <label class="f"><span class="lb">คิดเป็นเงิน<span class="cap">บาท</span></span>
-          <input type="number" id="bonusAmt" step="1"></label>
+          <input type="text" inputmode="numeric" id="bonusAmt" placeholder="0"></label>
       </div>
       <div class="note" id="bonusNote"></div>
 
       <div class="subhead">กองทุนสำรองเลี้ยงชีพ · หักจากฐานเงินเดือนเท่านั้น</div>
       <div class="grid3">
         <label class="f"><span class="lb">อัตราที่หักตอนนี้<span class="cap">% · สูงสุด 15</span></span>
-          <input type="number" id="pvdPct" step="0.5" min="0" max="15"></label>
+          <input type="text" inputmode="decimal" id="pvdPct" placeholder="0"></label>
         <label class="f"><span class="lb">จะเปลี่ยนเป็น<span class="cap">% · เว้นว่างถ้าไม่เปลี่ยน</span></span>
-          <input type="number" id="pvdNewPct" step="0.5" min="0" max="15" placeholder="ไม่เปลี่ยน"></label>
+          <input type="text" inputmode="decimal" id="pvdNewPct" placeholder="ไม่เปลี่ยน"></label>
         <label class="f"><span class="lb">ตั้งแต่เดือน</span>
           <select id="pvdChangeMonth"></select></label>
       </div>
@@ -271,11 +271,11 @@ footer.foot{max-width:1280px; margin:0 auto; padding:8px 20px 0; font-size:12px;
       <div class="subhead">ประกันสังคมและภาษีหัก ณ ที่จ่าย</div>
       <div class="grid3">
         <label class="f"><span class="lb">ประกันสังคม<span class="cap">%</span></span>
-          <input type="number" id="ssoPct" step="0.5"></label>
+          <input type="text" inputmode="decimal" id="ssoPct" placeholder="0"></label>
         <label class="f"><span class="lb">เพดานฐานประกันสังคม<span class="cap">บาท/เดือน</span></span>
-          <input type="number" id="ssoCap" step="500"></label>
+          <input type="text" inputmode="numeric" id="ssoCap" placeholder="0"></label>
         <label class="f"><span class="lb">ภาษีถูกหักต่อเดือน<span class="cap">บาท · จากสลิป</span></span>
-          <input type="number" id="whtMonthly" step="1"></label>
+          <input type="text" inputmode="numeric" id="whtMonthly" placeholder="0"></label>
       </div>
     </div>
   </section>
@@ -422,6 +422,33 @@ function fmt(n){ if(!isFinite(n)) n=0; return Math.round(n).toLocaleString("en-U
 function num(v){ var n=parseFloat(String(v).replace(/,/g,"")); return isFinite(n)?n:0; }
 function $(id){ return document.getElementById(id); }
 
+/* ---------- ช่องกรอกตัวเลข ----------
+   kind: money = ใส่จุลภาค | dec = %/จำนวนเท่า/จำนวนคน | year = ปี พ.ศ. ไม่ใส่จุลภาค
+   ค่า 0 แสดงเป็นช่องว่าง เพื่อไม่ให้เลข 0 ค้างแล้วพิมพ์ต่อกลายเป็นคนละจำนวน */
+function shown(v, kind){
+  var n=num(v);
+  if(kind==="year") return String(n);
+  if(n===0) return "";
+  if(kind==="dec")  return String(n);
+  return Math.round(n).toLocaleString("en-US");
+}
+function raw(v, kind){
+  var n=num(v);
+  if(kind==="year") return String(n);
+  return n===0 ? "" : String(n);
+}
+/* ผูกช่องตัวเลขหนึ่งช่อง: โฟกัส = เห็นเลขดิบและเลือกทั้งหมด, พิมพ์ = คำนวณสด, ออกจากช่อง = ใส่จุลภาค */
+function wireNum(el, kind, get, set, after, blank){
+  if(blank===undefined) blank=0;
+  el.addEventListener("focus", function(){ el.value=raw(get(), kind); el.select(); });
+  el.addEventListener("input", function(){
+    set(el.value.trim()==="" ? blank : num(el.value));
+    if(after) after();
+    save(); render();
+  });
+  el.addEventListener("blur", function(){ el.value=shown(get(), kind); });
+}
+
 /* ---------- tax ---------- */
 function taxOf(net){
   var t=0, prev=0, det=[], i;
@@ -528,10 +555,17 @@ function fillSelects(){
   $("pvdChangeMonth").innerHTML='<option value="0">ไม่เปลี่ยน</option>'+h;
 }
 
+/* ชนิดของแต่ละช่อง ใช้ทั้งตอนแสดงผลและตอนผูก event */
+var KIND={
+  taxYear:"year",
+  ytdIncome:"money", ytdPvd:"money", ytdSso:"money", ytdWht:"money",
+  salaryNow:"money", otherMonthly:"money", extraIncome:"money", bonusAmt:"money",
+  ssoCap:"money", whtMonthly:"money",
+  bonusX:"dec", pvdPct:"dec", pvdNewPct:"dec", ssoPct:"dec"
+};
 function syncInputs(){
-  ["taxYear","slipMonth","ytdIncome","ytdPvd","ytdSso","ytdWht","salaryNow","otherMonthly",
-   "extraIncome","bonusX","bonusMonth","bonusAmt","pvdPct","pvdNewPct","pvdChangeMonth",
-   "ssoPct","ssoCap","whtMonthly","extra"].forEach(function(id){ $(id).value=S[id]; });
+  for(var id in KIND) $(id).value = shown(S[id], KIND[id]);
+  ["slipMonth","bonusMonth","pvdChangeMonth","extra"].forEach(function(id){ $(id).value=S[id]; });
 }
 
 function renderDeductions(){
@@ -542,19 +576,21 @@ function renderDeductions(){
       var capTxt = it.capNote ? it.capNote : (it.cap? "สูงสุด "+fmt(it.cap) : (it.note||""));
       if(it.fixed!==undefined){
         h+='<label class="f"><span class="lb">'+it.lb+'<span class="cap">'+capTxt+'</span></span>'
-          +'<input type="number" value="'+it.fixed+'" disabled></label>';
+          +'<input type="text" inputmode="numeric" value="'+fmt(it.fixed)+'" disabled></label>';
       } else if(it.auto){
         h+='<label class="f"><span class="lb">'+it.lb+'<span class="cap">'+capTxt+'</span></span>'
-          +'<input type="number" id="auto_'+it.id+'" disabled></label>';
+          +'<input type="text" inputmode="numeric" id="auto_'+it.id+'" disabled></label>';
       } else if(it.type==="check"){
         h+='<div class="chk"><input type="checkbox" id="d_'+it.id+'" data-ded="'+it.id+'" data-val="'+it.val+'">'
           +'<label for="d_'+it.id+'">'+it.lb+' <span style="color:var(--muted)">(60,000)</span></label></div>';
       } else if(it.type==="count"){
         h+='<label class="f"><span class="lb">'+it.lb+'<span class="cap">คน</span></span>'
-          +'<input type="number" min="0" max="'+it.max+'" step="1" id="d_'+it.id+'" data-ded="'+it.id+'"></label>';
+          +'<input type="text" inputmode="numeric" id="d_'+it.id+'" data-ded="'+it.id+'"'
+          +' data-kind="dec" data-max="'+it.max+'" placeholder="0"></label>';
       } else {
         h+='<label class="f"><span class="lb">'+it.lb+'<span class="cap">'+capTxt+'</span></span>'
-          +'<input type="number" step="1" id="d_'+it.id+'" data-ded="'+it.id+'"></label>';
+          +'<input type="text" inputmode="numeric" id="d_'+it.id+'" data-ded="'+it.id+'"'
+          +' data-kind="money" placeholder="0"></label>';
       }
     });
     h+='</div>';
@@ -564,13 +600,17 @@ function renderDeductions(){
 
   host.querySelectorAll("[data-ded]").forEach(function(el){
     var id=el.getAttribute("data-ded");
-    if(el.type==="checkbox") el.checked = num(S.ded[id])>0;
-    else el.value = S.ded[id]||0;
-    function upd(){
-      S.ded[id] = (el.type==="checkbox") ? (el.checked? num(el.getAttribute("data-val")):0) : num(el.value);
-      save(); render();
+    if(el.type==="checkbox"){
+      el.checked = num(S.ded[id])>0;
+      function upd(){ S.ded[id] = el.checked? num(el.getAttribute("data-val")) : 0; save(); render(); }
+      el.addEventListener("change", upd);
+      return;
     }
-    el.addEventListener("input", upd); el.addEventListener("change", upd);
+    var kind=el.getAttribute("data-kind"), max=el.getAttribute("data-max");
+    el.value = shown(S.ded[id], kind);
+    wireNum(el, kind,
+      function(){ return S.ded[id]; },
+      function(v){ S.ded[id] = max ? Math.min(v, num(max)) : v; });
   });
 }
 
@@ -751,12 +791,12 @@ function render(){
   $("margRate").textContent=(marg*100).toFixed(0)+"%";
 
   var as=$("auto_sso"), ap=$("auto_pvd");
-  if(as) as.value=Math.round(res.caps.sso);
-  if(ap) ap.value=Math.round(res.caps.pvd);
+  if(as) as.value=fmt(res.caps.sso);
+  if(ap) ap.value=fmt(res.caps.pvd);
 }
 
 /* ---------- wiring ---------- */
-function bind(id, after){
+function bind(id, after){          /* สำหรับ select และ slider */
   var el=$(id);
   function upd(){
     S[id] = (el.tagName==="SELECT") ? Number(el.value) : num(el.value);
@@ -768,7 +808,8 @@ function bind(id, after){
 function syncBonus(){
   if(num(S.bonusX)>0 && num(S.salaryNow)>0){
     S.bonusAmt = Math.round(num(S.bonusX)*num(S.salaryNow));
-    $("bonusAmt").value = S.bonusAmt;
+    var el=$("bonusAmt");
+    if(document.activeElement!==el) el.value = shown(S.bonusAmt, "money");
   }
 }
 
@@ -778,18 +819,21 @@ renderDeductions();
 syncInputs();
 render();
 
-["taxYear","slipMonth","ytdIncome","ytdPvd","ytdSso","ytdWht","otherMonthly","extraIncome",
- "bonusMonth","bonusAmt","ssoPct","ssoCap","whtMonthly","extra"]
-  .forEach(function(id){ bind(id); });
-bind("pvdPct");
-bind("pvdChangeMonth");
-(function(){                      /* เว้นว่าง = ไม่เปลี่ยนอัตรา ต้องแยกจากเลข 0 */
-  var el=$("pvdNewPct");
-  function upd(){ S.pvdNewPct = (el.value==="") ? "" : num(el.value); save(); render(); }
-  el.addEventListener("input", upd); el.addEventListener("change", upd);
-})();
-bind("salaryNow", syncBonus);
-bind("bonusX", syncBonus);
+["slipMonth","bonusMonth","pvdChangeMonth","extra"].forEach(function(id){ bind(id); });
+
+/* ช่องตัวเลขทั้งหมด — salaryNow กับ bonusX คำนวณยอดโบนัสใหม่ทุกครั้งที่แก้ */
+for(var kid in KIND){
+  if(kid==="pvdNewPct") continue;               /* เว้นว่าง = ไม่เปลี่ยนอัตรา ต้องแยกจากเลข 0 */
+  (function(id){
+    wireNum($(id), KIND[id],
+      function(){ return S[id]; },
+      function(v){ S[id]=v; },
+      (id==="salaryNow"||id==="bonusX") ? syncBonus : null);
+  })(kid);
+}
+wireNum($("pvdNewPct"), "dec",
+  function(){ return S.pvdNewPct===""? 0 : S.pvdNewPct; },
+  function(v){ S.pvdNewPct=v; }, null, "");
 
 $("resetBtn").addEventListener("click", function(){
   if(!confirm("ล้างข้อมูลทั้งหมดและเริ่มใหม่?")) return;

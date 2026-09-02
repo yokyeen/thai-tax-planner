@@ -1,0 +1,17 @@
+# กันไฟล์ส่วนตัวหลุดขึ้น repo สาธารณะ — สลิปเงินเดือน เอกสารสแกน รูปถ่าย
+*.pdf
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.heic
+*.xlsx
+*.xls
+*.csv
+
+# ระบบปฏิบัติการและเอดิเตอร์
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/

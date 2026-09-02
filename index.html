@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="คำนวณและวางแผนภาษีเงินได้บุคคลธรรมดาทั้งปี จากยอดสะสมในสลิปเงินเดือนเดือนล่าสุด ข้อมูลอยู่ในเครื่องผู้ใช้เท่านั้น">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#129534;</text></svg>"><title>วางแผนภาษีจากยอดสะสมในสลิป</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Thai+Looped:wght@400;500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap">
+
+<style>
+:root{
+  --paper:#EDF0F4; --card:#FFFFFF; --field:#F6F8FB;
+  --ink:#141B26; --muted:#5B6779; --line:#D6DDE6; --line-soft:#E7ECF2;
+  --accent:#2B4B8C; --accent-ink:#2B4B8C; --accent-soft:#E3EAF7;
+  --seal:#A8342A; --good:#186B50; --warn:#8E6210;
+  --on-accent:#FFFFFF;
+  --shadow:0 1px 2px rgba(20,27,38,.06), 0 8px 24px -14px rgba(20,27,38,.22);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0C1118; --card:#141B25; --field:#0F161F;
+    --ink:#E6EBF3; --muted:#8C98AB; --line:#242F3D; --line-soft:#1C2430;
+    --accent:#8FADEA; --accent-ink:#B7C8F2; --accent-soft:#1A2540;
+    --seal:#E2887D; --good:#5CC59B; --warn:#D6AC57;
+    --on-accent:#0C1118;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px -16px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0C1118; --card:#141B25; --field:#0F161F;
+  --ink:#E6EBF3; --muted:#8C98AB; --line:#242F3D; --line-soft:#1C2430;
+  --accent:#8FADEA; --accent-ink:#B7C8F2; --accent-soft:#1A2540;
+  --seal:#E2887D; --good:#5CC59B; --warn:#D6AC57;
+  --on-accent:#0C1118;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px -16px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans Thai Looped","IBM Plex Sans Thai",system-ui,sans-serif;
+  font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{margin:0; text-wrap:balance; font-weight:600; letter-spacing:-.01em;
+  font-family:"IBM Plex Sans Thai","IBM Plex Sans Thai Looped",system-ui,sans-serif}
+.num{font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums}
+.wrap{max-width:1280px; margin:0 auto; padding:0 20px 80px}
+
+header.top{border-bottom:1px solid var(--line); background:var(--card)}
+.top-in{max-width:1280px; margin:0 auto; padding:18px 20px; display:flex; gap:18px; align-items:baseline; flex-wrap:wrap}
+.mark{
+  font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--accent-ink); border:1px solid var(--accent); border-radius:3px; padding:3px 7px; flex:none;
+}
+.top h1{font-size:19px}
+.top .sub{color:var(--muted); font-size:13px; margin-left:auto}
+select,input,button,textarea{font:inherit; color:inherit}
+
+.cols{display:grid; grid-template-columns:minmax(0,1fr) 372px; gap:22px; align-items:start; margin-top:22px}
+@media (max-width:1040px){ .cols{grid-template-columns:minmax(0,1fr)} }
+
+.card{background:var(--card); border:1px solid var(--line); border-radius:8px; box-shadow:var(--shadow); margin-bottom:18px}
+.card > .hd{display:flex; align-items:center; gap:10px; padding:13px 18px; border-bottom:1px solid var(--line-soft)}
+.hd h2{font-size:15px; font-weight:600}
+.hd .step{
+  font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--muted);
+  border:1px solid var(--line); border-radius:999px; width:22px; height:22px;
+  display:grid; place-items:center; flex:none;
+}
+.hd .hint{margin-left:auto; font-size:12px; color:var(--muted); text-align:right}
+.bd{padding:16px 18px}
+
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px 14px}
+.grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px 14px}
+.grid4{display:grid; grid-template-columns:repeat(4,1fr); gap:12px 14px}
+@media (max-width:820px){ .grid4{grid-template-columns:1fr 1fr} }
+@media (max-width:560px){ .grid2,.grid3,.grid4{grid-template-columns:1fr} }
+label.f{display:flex; flex-direction:column; gap:5px; font-size:13px; color:var(--muted); min-width:0}
+label.f > span.lb{display:flex; align-items:baseline; gap:6px}
+label.f .cap{font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--muted); opacity:.8; margin-left:auto}
+input[type=number],input[type=text],select,textarea{
+  background:var(--field); border:1px solid var(--line); border-radius:5px; padding:7px 9px;
+  width:100%; min-width:0; color:var(--ink); transition:border-color .12s, box-shadow .12s;
+}
+input[type=number]{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; text-align:right}
+select{text-align:left; font-family:inherit}
+input:focus-visible,select:focus-visible,button:focus-visible{
+  outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);
+}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]{-moz-appearance:textfield}
+.chk{display:flex; align-items:center; gap:9px; font-size:13.5px; color:var(--ink); padding:6px 0}
+.chk input{accent-color:var(--accent); width:16px; height:16px}
+input.ytd{background:var(--accent-soft); border-color:var(--accent); font-weight:500}
+
+button{
+  background:var(--card); border:1px solid var(--line); border-radius:5px; padding:7px 13px;
+  cursor:pointer; font-size:13px; font-family:"IBM Plex Sans Thai",sans-serif; transition:.12s;
+}
+button:hover{border-color:var(--accent); color:var(--accent-ink)}
+button.pri{background:var(--accent); border-color:var(--accent); color:var(--on-accent)}
+button.pri:hover{filter:brightness(1.06); color:var(--on-accent); border-color:var(--accent)}
+.btnrow{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+
+.note{
+  font-size:12.5px; color:var(--muted); background:var(--field); border-left:2px solid var(--line);
+  padding:9px 12px; border-radius:0 5px 5px 0; margin-top:12px;
+}
+.note b{color:var(--ink); font-weight:600}
+.note.flag{border-left-color:var(--warn); color:var(--warn)}
+.note.flag b{color:var(--warn)}
+.note.ok{border-left-color:var(--good)}
+
+.warnmsg{
+  font-size:12.5px; color:var(--warn); background:color-mix(in srgb,var(--warn) 10%,transparent);
+  border-radius:5px; padding:8px 11px; margin-top:10px;
+}
+.subhead{
+  font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.13em; text-transform:uppercase;
+  color:var(--muted); margin:18px 0 9px; padding-bottom:5px; border-bottom:1px solid var(--line-soft);
+}
+.subhead:first-child{margin-top:0}
+
+/* breakdown table (read-only) */
+.tblbox{overflow-x:auto; border:1px solid var(--line-soft); border-radius:6px}
+table.bk{border-collapse:collapse; width:100%; min-width:520px; font-size:13px}
+table.bk th{
+  font-family:"IBM Plex Sans Thai",sans-serif; font-weight:500; font-size:11.5px; color:var(--muted);
+  text-align:right; padding:9px 12px; border-bottom:1px solid var(--line); background:var(--field); white-space:nowrap;
+}
+table.bk th:first-child{text-align:left}
+table.bk td{
+  padding:8px 12px; border-bottom:1px solid var(--line-soft); text-align:right;
+  font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums;
+}
+table.bk td:first-child{
+  text-align:left; font-family:"IBM Plex Sans Thai Looped",sans-serif; color:var(--muted); white-space:nowrap;
+}
+table.bk td.z{color:var(--muted); opacity:.45}
+table.bk tr.tot td{
+  font-weight:600; border-top:1px solid var(--line); border-bottom:none; background:var(--field);
+}
+table.bk tr.tot td:first-child{color:var(--ink); font-weight:600}
+table.bk tr.gap td{padding-top:14px}
+table.bk td:last-child{color:var(--ink); font-weight:500}
+
+.side{position:sticky; top:16px}
+@media (max-width:1040px){ .side{position:static} }
+.result{background:var(--card); border:1px solid var(--line); border-radius:8px; box-shadow:var(--shadow); overflow:hidden}
+.result .cap{padding:14px 18px 0; font-size:12px; color:var(--muted); font-family:"IBM Plex Sans Thai",sans-serif}
+.bigfig{padding:2px 18px 14px; display:flex; align-items:baseline; gap:8px}
+.bigfig .v{font-family:"IBM Plex Mono",monospace; font-size:34px; font-weight:500; letter-spacing:-.02em}
+.bigfig .u{font-size:13px; color:var(--muted)}
+.verdict{padding:11px 18px; font-size:13.5px; border-top:1px solid var(--line-soft); display:flex; gap:8px; align-items:baseline}
+.verdict .tag{
+  font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
+  padding:2px 6px; border-radius:3px; border:1px solid currentColor; flex:none;
+}
+.verdict.pay{color:var(--seal)} .verdict.refund{color:var(--good)}
+.verdict .txt{color:var(--ink)}
+.rows{padding:6px 18px 14px; border-top:1px solid var(--line-soft)}
+.row{display:flex; justify-content:space-between; gap:12px; padding:5px 0; font-size:13px}
+.row .k{color:var(--muted)} .row .v{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums}
+.row.strong{border-top:1px solid var(--line-soft); margin-top:5px; padding-top:8px}
+.row.strong .k{color:var(--ink); font-weight:600} .row.strong .v{font-weight:600}
+.row .v.neg{color:var(--seal)}
+
+.ladder{padding:4px 18px 16px; border-top:1px solid var(--line-soft)}
+.lad{display:grid; grid-template-columns:44px 1fr 78px; gap:9px; align-items:center; padding:3px 0; font-size:11.5px}
+.lad .rate{font-family:"IBM Plex Mono",monospace; color:var(--muted); text-align:right}
+.lad .bar{height:8px; border-radius:2px; background:var(--line-soft); overflow:hidden}
+.lad .bar i{display:block; height:100%; background:var(--accent); border-radius:2px}
+.lad .amt{font-family:"IBM Plex Mono",monospace; text-align:right; color:var(--muted)}
+.lad.on .rate,.lad.on .amt{color:var(--ink)}
+.lad.cur .rate{color:var(--seal); font-weight:600}
+.lad.cur .bar i{background:var(--seal)}
+
+.planner{padding:14px 18px; border-top:1px solid var(--line-soft)}
+.planner h3{font-size:13px; margin-bottom:3px}
+.planner p.sm{font-size:12px; color:var(--muted); margin:0 0 10px}
+input[type=range]{width:100%; accent-color:var(--seal); margin:2px 0}
+.saveline{display:flex; justify-content:space-between; align-items:baseline; font-size:13px; margin-top:6px}
+.saveline .big{font-family:"IBM Plex Mono",monospace; font-size:19px; color:var(--good); font-weight:500}
+.headroom{padding:0 18px 16px}
+.hr-item{display:flex; justify-content:space-between; gap:10px; font-size:12.5px; padding:4px 0; color:var(--muted)}
+.hr-item b{font-family:"IBM Plex Mono",monospace; font-weight:500; color:var(--ink)}
+.hr-item.full b{color:var(--muted)}
+
+footer.foot{max-width:1280px; margin:0 auto; padding:8px 20px 0; font-size:12px; color:var(--muted)}
+@media (prefers-reduced-motion: reduce){ *{transition:none !important} }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <span class="mark">ภ.ง.ด. 91</span>
+    <h1>วางแผนภาษีจากยอดสะสมในสลิป</h1>
+    <span class="sub">กรอกยอดสะสมจากสลิปเดือนล่าสุด แล้วเห็นภาษีทั้งปีทันที · ข้อมูลอยู่ในเครื่องคุณเท่านั้น</span>
+  </div>
+</header>
+
+<div class="wrap">
+<div class="cols">
+<div>
+
+  <!-- 1 -->
+  <section class="card">
+    <div class="hd"><span class="step">1</span><h2>ยอดสะสมจากสลิป</h2>
+      <span class="hint">ดูคอลัมน์ “สะสม” ในสลิปเดือนล่าสุด</span></div>
+    <div class="bd">
+      <div class="grid2">
+        <label class="f"><span class="lb">สลิปเดือน<span class="cap">งวด 21/7–20/8 = ส.ค.</span></span>
+          <select id="slipMonth"></select></label>
+        <label class="f"><span class="lb">ปีภาษี<span class="cap">พ.ศ.</span></span>
+          <input type="number" id="taxYear" step="1"></label>
+      </div>
+      <div class="grid4" style="margin-top:14px">
+        <label class="f"><span class="lb">รายได้สะสม<span class="cap">บาท</span></span>
+          <input type="number" id="ytdIncome" step="1" class="ytd"></label>
+        <label class="f"><span class="lb">กองทุนสำรองเลี้ยงชีพสะสม<span class="cap">บาท</span></span>
+          <input type="number" id="ytdPvd" step="1" class="ytd"></label>
+        <label class="f"><span class="lb">ประกันสังคมสะสม<span class="cap">บาท</span></span>
+          <input type="number" id="ytdSso" step="1" class="ytd"></label>
+        <label class="f"><span class="lb">ภาษีหักสะสม<span class="cap">บาท</span></span>
+          <input type="number" id="ytdWht" step="1" class="ytd"></label>
+      </div>
+      <div class="note" id="sanity"></div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="card">
+    <div class="hd"><span class="step">2</span><h2>เดือนที่เหลือของปี</h2>
+      <span class="hint" id="remainHint"></span></div>
+    <div class="bd">
+      <div class="grid3">
+        <label class="f"><span class="lb">เงินเดือนปัจจุบัน<span class="cap">บาท/เดือน</span></span>
+          <input type="number" id="salaryNow" step="1"></label>
+        <label class="f"><span class="lb">รายได้อื่นประจำ<span class="cap">บาท/เดือน</span></span>
+          <input type="number" id="otherMonthly" step="1"></label>
+        <label class="f"><span class="lb">รายได้พิเศษที่จะได้อีก<span class="cap">บาท</span></span>
+          <input type="number" id="extraIncome" step="1"></label>
+      </div>
+
+      <div class="subhead">โบนัส</div>
+      <div class="grid3">
+        <label class="f"><span class="lb">โบนัส<span class="cap">เท่าของเงินเดือน</span></span>
+          <input type="number" id="bonusX" step="0.1"></label>
+        <label class="f"><span class="lb">จ่ายเดือน</span>
+          <select id="bonusMonth"></select></label>
+        <label class="f"><span class="lb">คิดเป็นเงิน<span class="cap">บาท</span></span>
+          <input type="number" id="bonusAmt" step="1"></label>
+      </div>
+      <div class="note" id="bonusNote"></div>
+
+      <div class="subhead">กองทุนสำรองเลี้ยงชีพ · หักจากฐานเงินเดือนเท่านั้น</div>
+      <div class="grid3">
+        <label class="f"><span class="lb">อัตราที่หักตอนนี้<span class="cap">% · สูงสุด 15</span></span>
+          <input type="number" id="pvdPct" step="0.5" min="0" max="15"></label>
+        <label class="f"><span class="lb">จะเปลี่ยนเป็น<span class="cap">% · เว้นว่างถ้าไม่เปลี่ยน</span></span>
+          <input type="number" id="pvdNewPct" step="0.5" min="0" max="15" placeholder="ไม่เปลี่ยน"></label>
+        <label class="f"><span class="lb">ตั้งแต่เดือน</span>
+          <select id="pvdChangeMonth"></select></label>
+      </div>
+      <div class="note" id="pvdNote"></div>
+
+      <div class="subhead">ประกันสังคมและภาษีหัก ณ ที่จ่าย</div>
+      <div class="grid3">
+        <label class="f"><span class="lb">ประกันสังคม<span class="cap">%</span></span>
+          <input type="number" id="ssoPct" step="0.5"></label>
+        <label class="f"><span class="lb">เพดานฐานประกันสังคม<span class="cap">บาท/เดือน</span></span>
+          <input type="number" id="ssoCap" step="500"></label>
+        <label class="f"><span class="lb">ภาษีถูกหักต่อเดือน<span class="cap">บาท · จากสลิป</span></span>
+          <input type="number" id="whtMonthly" step="1"></label>
+      </div>
+    </div>
+  </section>
+
+  <!-- breakdown -->
+  <section class="card">
+    <div class="hd"><h2>ที่มาของตัวเลขทั้งปี</h2>
+      <span class="hint">อ่านอย่างเดียว · คำนวณจากช่องด้านบน</span></div>
+    <div class="bd">
+      <div class="tblbox"><table class="bk">
+        <thead><tr>
+          <th>รายการ</th><th id="hPast">สะสมแล้ว</th><th id="hFut">คาดการณ์</th><th>รวมทั้งปี</th>
+        </tr></thead>
+        <tbody id="bkBody"></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="card">
+    <div class="hd"><span class="step">3</span><h2>ค่าลดหย่อน</h2>
+      <span class="hint">ตามประมวลรัษฎากร · ระบบตัดเพดานให้อัตโนมัติ</span></div>
+    <div class="bd" id="dedBody"></div>
+  </section>
+
+  <div class="btnrow" style="margin-bottom:20px">
+    <button id="resetBtn">ล้างข้อมูลทั้งหมด</button>
+    <span style="font-size:12.5px; color:var(--muted)">ข้อมูลถูกบันทึกอัตโนมัติในเบราว์เซอร์เครื่องนี้</span>
+  </div>
+</div>
+
+<aside class="side">
+  <div class="result">
+    <div class="cap">ภาษีที่ต้องเสียทั้งปี (ประมาณการ)</div>
+    <div class="bigfig"><span class="v num" id="rTax">0</span><span class="u">บาท</span></div>
+    <div class="verdict" id="rVerdict"></div>
+    <div class="rows">
+      <div class="row"><span class="k">เงินได้พึงประเมินทั้งปี</span><span class="v" id="rGross">0</span></div>
+      <div class="row"><span class="k">หักค่าใช้จ่าย 50% (สูงสุด 100,000)</span><span class="v neg" id="rExp">0</span></div>
+      <div class="row"><span class="k">หักค่าลดหย่อนรวม</span><span class="v neg" id="rDed">0</span></div>
+      <div class="row strong"><span class="k">เงินได้สุทธิ</span><span class="v" id="rNet">0</span></div>
+      <div class="row"><span class="k">อัตราภาษีที่แท้จริง</span><span class="v" id="rEff">0%</span></div>
+      <div class="row"><span class="k">ภาษีถูกหักไว้แล้วทั้งปี</span><span class="v" id="rWht">0</span></div>
+      <div class="row"><span class="k">ควรถูกหักเดือนละ</span><span class="v" id="rPerMonth">0</span></div>
+    </div>
+    <div class="ladder" id="ladder"></div>
+    <div class="planner">
+      <h3>ถ้าซื้อค่าลดหย่อนเพิ่ม</h3>
+      <p class="sm">เลื่อนดูว่าลดหย่อนเพิ่มอีกเท่าไร ประหยัดภาษีได้เท่าไร</p>
+      <input type="range" id="extra" min="0" max="500000" step="5000" value="0">
+      <div class="saveline"><span>ลดหย่อนเพิ่ม <b class="num" id="extraV">0</b> บาท</span>
+        <span class="big" id="saveV">0</span></div>
+      <div class="saveline" style="font-size:12px; color:var(--muted)">
+        <span>อัตราภาษีขั้นสูงสุดที่คุณอยู่</span><span class="num" id="margRate">0%</span></div>
+    </div>
+    <div class="headroom">
+      <div class="subhead" style="margin-top:4px">เพดานที่ยังเหลือ</div>
+      <div id="hrList"></div>
+    </div>
+  </div>
+</aside>
+
+</div>
+</div>
+
+<footer class="foot">
+  ประมาณการตามอัตราภาษีเงินได้บุคคลธรรมดาแบบขั้นบันได และเพดานค่าลดหย่อนที่ใช้อยู่ปัจจุบัน
+  ใช้เพื่อวางแผนเท่านั้น ยอดจริงยึดตามการยื่นแบบกับกรมสรรพากร
+</footer>
+
+<script>
+(function(){
+"use strict";
+
+var MONTHS=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน",
+            "กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+
+var BRACKETS=[
+  {upTo:150000,rate:0},{upTo:300000,rate:.05},{upTo:500000,rate:.10},{upTo:750000,rate:.15},
+  {upTo:1000000,rate:.20},{upTo:2000000,rate:.25},{upTo:5000000,rate:.30},{upTo:Infinity,rate:.35}
+];
+
+var DED=[
+ {g:"ส่วนตัวและครอบครัว", items:[
+  {id:"personal", lb:"ผู้มีเงินได้", fixed:60000, note:"หักได้เต็มทุกคน"},
+  {id:"spouse",   lb:"คู่สมรสไม่มีเงินได้", type:"check", val:60000},
+  {id:"child1",   lb:"บุตร (คนละ 30,000)", type:"count", val:30000, max:10},
+  {id:"child2",   lb:"บุตรคนที่ 2 ขึ้นไป เกิดตั้งแต่ปี 2561 (คนละ 60,000)", type:"count", val:60000, max:10},
+  {id:"parent",   lb:"อุปการะบิดามารดา อายุ 60+ (คนละ 30,000)", type:"count", val:30000, max:4},
+  {id:"disabled", lb:"อุปการะคนพิการ/ทุพพลภาพ (คนละ 60,000)", type:"count", val:60000, max:5},
+  {id:"maternity",lb:"ค่าฝากครรภ์และคลอดบุตร", cap:60000}
+ ]},
+ {g:"ประกันและการออม", items:[
+  {id:"sso",      lb:"ประกันสังคม", auto:"sso", capNote:"จากยอดสะสม + เดือนที่เหลือ"},
+  {id:"pvd",      lb:"กองทุนสำรองเลี้ยงชีพ", auto:"pvd", capNote:"ไม่เกิน 15% ของเงินเดือน"},
+  {id:"lifeIns",  lb:"เบี้ยประกันชีวิต", cap:100000, capNote:"รวมประกันสุขภาพตนเองไม่เกิน 100,000"},
+  {id:"healthIns",lb:"เบี้ยประกันสุขภาพตนเอง", cap:25000},
+  {id:"parentIns",lb:"ประกันสุขภาพบิดามารดา", cap:15000},
+  {id:"rmf",      lb:"RMF", capNote:"ไม่เกิน 30% ของเงินได้"},
+  {id:"ssf",      lb:"SSF", cap:200000, capNote:"ไม่เกิน 30% ของเงินได้ และ 200,000"},
+  {id:"pension",  lb:"ประกันชีวิตแบบบำนาญ", cap:200000, capNote:"ไม่เกิน 15% ของเงินได้"},
+  {id:"nsf",      lb:"กองทุนการออมแห่งชาติ (กอช.)", cap:30000},
+  {id:"thaiesg",  lb:"กองทุนไทยเพื่อความยั่งยืน (Thai ESG)", cap:300000, capNote:"ไม่เกิน 30% ของเงินได้"}
+ ]},
+ {g:"อื่น ๆ และเงินบริจาค", items:[
+  {id:"homeLoan", lb:"ดอกเบี้ยกู้ยืมเพื่อที่อยู่อาศัย", cap:100000},
+  {id:"eReceipt", lb:"Easy E-Receipt", cap:50000},
+  {id:"otherDed", lb:"ค่าลดหย่อนอื่น ๆ"},
+  {id:"donateEdu",lb:"บริจาคการศึกษา/กีฬา/พัฒนาสังคม (หัก 2 เท่า)", capNote:"รวมบริจาคไม่เกิน 10% ของเงินได้หลังหัก"},
+  {id:"donateGen",lb:"บริจาคทั่วไป", capNote:"ไม่เกิน 10% ของเงินได้หลังหัก"}
+ ]}
+];
+
+var LS="thai-tax-planner-v2";
+var PVD_MAX_PCT=15;          /* เพดานบริษัท = เพดานกฎหมาย 15% ของค่าจ้าง */
+var S=null;
+
+function defaults(){
+  var now=new Date();
+  return {
+    taxYear: now.getFullYear()+543,
+    slipMonth: Math.max(1, now.getMonth()),
+    ytdIncome:0, ytdPvd:0, ytdSso:0, ytdWht:0,
+    salaryNow:0, otherMonthly:0, extraIncome:0,
+    bonusX:0, bonusMonth:0, bonusAmt:0,
+    pvdPct:5, pvdNewPct:"", pvdChangeMonth:4,
+    ssoPct:5, ssoCap:17500, whtMonthly:0,
+    ded:{ spouse:0, child1:0, child2:0, parent:0, disabled:0, maternity:0,
+          lifeIns:0, healthIns:0, parentIns:0, rmf:0, ssf:0, pension:0, nsf:0, thaiesg:0,
+          homeLoan:0, eReceipt:0, otherDed:0, donateEdu:0, donateGen:0 },
+    extra:0
+  };
+}
+function load(){
+  try{ var r=localStorage.getItem(LS);
+    if(r){ var o=JSON.parse(r), d=defaults(), k;
+      for(k in d) if(!(k in o)) o[k]=d[k];
+      for(k in d.ded) if(!(k in o.ded)) o.ded[k]=d.ded[k];
+      return o; } }catch(e){}
+  return defaults();
+}
+function save(){ try{ localStorage.setItem(LS, JSON.stringify(S)); }catch(e){} }
+function fmt(n){ if(!isFinite(n)) n=0; return Math.round(n).toLocaleString("en-US"); }
+function num(v){ var n=parseFloat(String(v).replace(/,/g,"")); return isFinite(n)?n:0; }
+function $(id){ return document.getElementById(id); }
+
+/* ---------- tax ---------- */
+function taxOf(net){
+  var t=0, prev=0, det=[], i;
+  for(i=0;i<BRACKETS.length;i++){
+    var b=BRACKETS[i];
+    var span=Math.max(0, Math.min(net, b.upTo)-prev);
+    det.push({rate:b.rate, base:span, tax:span*b.rate,
+              width:(b.upTo===Infinity?2000000:b.upTo-prev)});
+    t+=span*b.rate;
+    prev=b.upTo;
+  }
+  return {tax:t, detail:det};
+}
+
+/* ---------- model ---------- */
+function model(){
+  var slipM=Number(S.slipMonth), remain=12-slipM;
+  var bm=Number(S.bonusMonth);
+  var bonusPaid = bm>0 && bm<=slipM;                 /* already inside YTD */
+  var bonusFuture = (bm>0 && bm>slipM) ? num(S.bonusAmt) : 0;
+
+  var futSalary = num(S.salaryNow)*remain;
+  var futOther  = num(S.otherMonthly)*remain;
+  var futExtra  = num(S.extraIncome);
+
+  /* PVD หักจากฐานเงินเดือนเท่านั้น — ไม่หักจากโบนัสหรือรายได้อื่น
+     เพดาน 15% ของค่าจ้าง ใช้ฐานเดียวกับตัวคูณ จึงบังคับที่อัตราได้เลย
+     อัตราเปลี่ยนกลางปีได้ (ปกติเดือน 4) เดือนก่อนหน้าใช้อัตราเดิม */
+  var pvdRate = Math.min(num(S.pvdPct), PVD_MAX_PCT);
+  var chgM = Number(S.pvdChangeMonth);
+  var hasChange = chgM>0 && S.pvdNewPct!=="" && S.pvdNewPct!==null;
+  var pvdRateNew = hasChange ? Math.min(num(S.pvdNewPct), PVD_MAX_PCT) : pvdRate;
+  var changeIsPast = hasChange && chgM<=slipM;
+
+  var futPvd=0, mi;
+  for(mi=slipM+1; mi<=12; mi++){
+    var r = (hasChange && !changeIsPast && mi>=chgM) ? pvdRateNew : pvdRate;
+    futPvd += num(S.salaryNow)*r/100;
+  }
+  var futSso = Math.min(num(S.salaryNow), num(S.ssoCap))*num(S.ssoPct)/100*remain;
+  var futWht = num(S.whtMonthly)*remain;
+
+  return {
+    slipM:slipM, remain:remain, bonusPaid:bonusPaid, bonusFuture:bonusFuture,
+    pvdRate:pvdRate, pvdRateNew:pvdRateNew, hasChange:hasChange,
+    changeIsPast:changeIsPast, chgM:chgM,
+    past:{ income:num(S.ytdIncome), pvd:num(S.ytdPvd), sso:num(S.ytdSso), wht:num(S.ytdWht) },
+    fut:{ salary:futSalary, other:futOther, extra:futExtra, bonus:bonusFuture,
+          income:futSalary+futOther+futExtra+bonusFuture, pvd:futPvd, sso:futSso, wht:futWht }
+  };
+}
+
+function compute(extraDeduct){
+  extraDeduct = extraDeduct||0;
+  var M=model(), d=S.ded;
+  var gross = M.past.income + M.fut.income;
+  var expense = Math.min(gross*0.5, 100000);
+
+  var pvdTotal = M.past.pvd + M.fut.pvd;
+  var ssoTotal = M.past.sso + M.fut.sso;
+  var whtTotal = M.past.wht + M.fut.wht;
+
+  /* 15% ของค่าจ้าง บังคับที่อัตราไปแล้วใน model() เหลือแค่เพดานเงิน 500,000 */
+  var pvdCapped = Math.min(pvdTotal, 500000);
+  var ssoCapped = Math.min(ssoTotal, num(S.ssoCap)*num(S.ssoPct)/100*12);
+
+  var health = Math.min(num(d.healthIns), 25000);
+  var lifeGroup = Math.min(num(d.lifeIns)+health, 100000);
+  var rmf = Math.min(num(d.rmf), gross*0.30);
+  var ssf = Math.min(num(d.ssf), gross*0.30, 200000);
+  var pension = Math.min(num(d.pension), gross*0.15, 200000);
+  var nsf = Math.min(num(d.nsf), 30000);
+  var retireRaw = pvdCapped+rmf+ssf+pension+nsf;
+  var retire = Math.min(retireRaw, 500000);
+  var thaiesg = Math.min(num(d.thaiesg), gross*0.30, 300000);
+
+  var family = 60000 + num(d.spouse) + num(d.child1)*30000 + num(d.child2)*60000
+    + num(d.parent)*30000 + num(d.disabled)*60000 + Math.min(num(d.maternity),60000);
+  var otherD = Math.min(num(d.homeLoan),100000) + Math.min(num(d.eReceipt),50000) + num(d.otherDed);
+
+  var dedNoDonate = family + ssoCapped + lifeGroup + Math.min(num(d.parentIns),15000)
+    + retire + thaiesg + otherD + extraDeduct;
+
+  var A = Math.max(0, gross - expense - dedNoDonate);
+  var eduDed = Math.min(num(d.donateEdu)*2, A*0.10);
+  var A2 = A - eduDed;
+  var genDed = Math.min(num(d.donateGen), A2*0.10);
+  var net = Math.max(0, A2 - genDed);
+  var r = taxOf(net);
+
+  return { M:M, gross:gross, expense:expense, ded:dedNoDonate+eduDed+genDed,
+    net:net, tax:r.tax, detail:r.detail, wht:whtTotal,
+    tot:{ pvd:pvdTotal, sso:ssoTotal, wht:whtTotal },
+    caps:{ pvd:pvdCapped, sso:ssoCapped, life:lifeGroup, rmf:rmf, ssf:ssf, pension:pension,
+           nsf:nsf, retireOver:retireRaw-retire, thaiesg:thaiesg } };
+}
+
+/* ---------- render ---------- */
+function fillSelects(){
+  var h="", i;
+  for(i=1;i<=12;i++) h+='<option value="'+i+'">'+MONTHS[i-1]+'</option>';
+  $("slipMonth").innerHTML=h;
+  $("bonusMonth").innerHTML='<option value="0">ไม่มี / ยังไม่ทราบ</option>'+h;
+  $("pvdChangeMonth").innerHTML='<option value="0">ไม่เปลี่ยน</option>'+h;
+}
+
+function syncInputs(){
+  ["taxYear","slipMonth","ytdIncome","ytdPvd","ytdSso","ytdWht","salaryNow","otherMonthly",
+   "extraIncome","bonusX","bonusMonth","bonusAmt","pvdPct","pvdNewPct","pvdChangeMonth",
+   "ssoPct","ssoCap","whtMonthly","extra"].forEach(function(id){ $(id).value=S[id]; });
+}
+
+function renderDeductions(){
+  var host=$("dedBody"), h="";
+  DED.forEach(function(grp){
+    h+='<div class="subhead">'+grp.g+'</div><div class="grid2">';
+    grp.items.forEach(function(it){
+      var capTxt = it.capNote ? it.capNote : (it.cap? "สูงสุด "+fmt(it.cap) : (it.note||""));
+      if(it.fixed!==undefined){
+        h+='<label class="f"><span class="lb">'+it.lb+'<span class="cap">'+capTxt+'</span></span>'
+          +'<input type="number" value="'+it.fixed+'" disabled></label>';
+      } else if(it.auto){
+        h+='<label class="f"><span class="lb">'+it.lb+'<span class="cap">'+capTxt+'</span></span>'
+          +'<input type="number" id="auto_'+it.id+'" disabled></label>';
+      } else if(it.type==="check"){
+        h+='<div class="chk"><input type="checkbox" id="d_'+it.id+'" data-ded="'+it.id+'" data-val="'+it.val+'">'
+          +'<label for="d_'+it.id+'">'+it.lb+' <span style="color:var(--muted)">(60,000)</span></label></div>';
+      } else if(it.type==="count"){
+        h+='<label class="f"><span class="lb">'+it.lb+'<span class="cap">คน</span></span>'
+          +'<input type="number" min="0" max="'+it.max+'" step="1" id="d_'+it.id+'" data-ded="'+it.id+'"></label>';
+      } else {
+        h+='<label class="f"><span class="lb">'+it.lb+'<span class="cap">'+capTxt+'</span></span>'
+          +'<input type="number" step="1" id="d_'+it.id+'" data-ded="'+it.id+'"></label>';
+      }
+    });
+    h+='</div>';
+  });
+  h+='<div id="dedWarn"></div>';
+  host.innerHTML=h;
+
+  host.querySelectorAll("[data-ded]").forEach(function(el){
+    var id=el.getAttribute("data-ded");
+    if(el.type==="checkbox") el.checked = num(S.ded[id])>0;
+    else el.value = S.ded[id]||0;
+    function upd(){
+      S.ded[id] = (el.type==="checkbox") ? (el.checked? num(el.getAttribute("data-val")):0) : num(el.value);
+      save(); render();
+    }
+    el.addEventListener("input", upd); el.addEventListener("change", upd);
+  });
+}
+
+function renderBreakdown(res){
+  var M=res.M, b="";
+  $("hPast").textContent="สะสมแล้ว ("+M.slipM+" เดือน)";
+  $("hFut").textContent="อีก "+M.remain+" เดือน";
+  function row(lb,p,f,cls){
+    function c(v){ return '<td class="'+(v?"":"z")+'">'+(v?fmt(v):"—")+'</td>'; }
+    b+='<tr class="'+(cls||"")+'"><td>'+lb+'</td>'+c(p)+c(f)+'<td>'+fmt(p+f)+'</td></tr>';
+  }
+  row("เงินเดือนและรายได้ประจำ", M.past.income, M.fut.salary+M.fut.other);
+  if(M.bonusPaid){
+    b+='<tr><td>โบนัส</td><td class="z" colspan="2" style="text-align:left; font-family:inherit">'
+      +'จ่ายไปแล้ว — รวมอยู่ในยอดสะสมข้างบน</td><td class="z">—</td></tr>';
+  } else row("โบนัส", 0, M.fut.bonus);
+  row("รายได้พิเศษ", 0, M.fut.extra);
+  row("รวมเงินได้พึงประเมิน", M.past.income, M.fut.income, "tot");
+  row("กองทุนสำรองเลี้ยงชีพ", M.past.pvd, M.fut.pvd, "gap");
+  row("ประกันสังคม", M.past.sso, M.fut.sso);
+  row("ภาษีหัก ณ ที่จ่าย", M.past.wht, M.fut.wht);
+  $("bkBody").innerHTML=b;
+}
+
+function renderLadder(res){
+  var h="", i, curIdx=-1;
+  for(i=0;i<res.detail.length;i++) if(res.detail[i].base>0) curIdx=i;
+  for(i=0;i<res.detail.length;i++){
+    var d=res.detail[i];
+    var pct = d.width>0 ? Math.min(100, d.base/d.width*100) : 0;
+    var cls = "lad"+(d.base>0?" on":"")+(i===curIdx?" cur":"");
+    h+='<div class="'+cls+'"><span class="rate">'+(d.rate*100).toFixed(0)+'%</span>'
+      +'<span class="bar"><i style="width:'+pct.toFixed(1)+'%"></i></span>'
+      +'<span class="amt">'+(d.tax>0?fmt(d.tax):"—")+'</span></div>';
+  }
+  $("ladder").innerHTML=h;
+  return curIdx>=0? res.detail[curIdx].rate : 0;
+}
+
+function renderHeadroom(res){
+  var c=res.caps, d=S.ded, g=res.gross, h="";
+  function item(lb, used, cap){
+    var left=Math.max(0, cap-used);
+    h+='<div class="hr-item'+(left<=0?" full":"")+'"><span>'+lb+'</span><b>'
+      +(left<=0?"เต็มแล้ว":fmt(left))+'</b></div>';
+  }
+  item("กลุ่มเกษียณรวม (สำรองเลี้ยงชีพ + RMF + SSF + บำนาญ + กอช.)", c.pvd+c.rmf+c.ssf+c.pension+c.nsf, 500000);
+  item("ประกันชีวิต + สุขภาพตนเอง", c.life, 100000);
+  item("RMF (30% ของเงินได้)", c.rmf, g*0.30);
+  item("SSF", c.ssf, Math.min(g*0.30,200000));
+  item("Thai ESG", c.thaiesg, Math.min(g*0.30,300000));
+  item("ดอกเบี้ยบ้าน", Math.min(num(d.homeLoan),100000), 100000);
+  item("Easy E-Receipt", Math.min(num(d.eReceipt),50000), 50000);
+  $("hrList").innerHTML=h;
+
+  var w="";
+  if(c.retireOver>0) w+='<div class="warnmsg">กลุ่มเกษียณเกินเพดาน 500,000 บาทอยู่ '+fmt(c.retireOver)+' บาท ส่วนเกินใช้ลดหย่อนไม่ได้</div>';
+  if(num(d.healthIns)>25000) w+='<div class="warnmsg">ประกันสุขภาพตนเองหักได้สูงสุด 25,000 บาท</div>';
+  var dw=$("dedWarn"); if(dw) dw.innerHTML=w;
+}
+
+function renderChecks(res){
+  var M=res.M;
+  $("remainHint").textContent = M.remain>0
+    ? "เหลืออีก "+M.remain+" เดือน ("+MONTHS[M.slipM]+"–ธันวาคม)"
+    : "สลิปเดือนธันวาคม — ยอดสะสมคือทั้งปีแล้ว";
+
+  /* --- sanity check on YTD vs slip month --- */
+  var el=$("sanity");
+  if(M.past.income<=0){
+    el.className="note";
+    el.innerHTML='กรอกยอดสะสม 4 ช่องจากสลิปเดือนล่าสุด แล้วตัวเลขทั้งปีจะคำนวณให้อัตโนมัติ '
+      +'<b>ไม่ต้องกรอกเงินเดือนย้อนหลัง</b> เพราะการปรับเงินเดือนเดือนเมษายน โอที และเงินตกเบิก รวมอยู่ในยอดสะสมแล้ว';
+    return;
+  }
+  var avg = M.past.income / M.slipM;
+  var expectMonthly = num(S.salaryNow)+num(S.otherMonthly);
+  var msg = 'รายได้สะสม '+M.slipM+' เดือน = เฉลี่ยเดือนละ <b>'+fmt(avg)+'</b> บาท';
+  var cls="note ok";
+  if(expectMonthly>0){
+    if(avg > expectMonthly*1.15 && !M.bonusPaid){
+      cls="note flag";
+      msg += ' — <b>สูงกว่าเงินเดือนปัจจุบันผิดปกติ</b> ถ้าโบนัสออกไปแล้วให้เลือกเดือนที่จ่ายในช่องโบนัส ไม่งั้นระบบจะนับซ้ำ';
+    } else if(avg < expectMonthly*0.6){
+      cls="note flag";
+      msg += ' — <b>ต่ำกว่าเงินเดือนปัจจุบันมาก</b> ตรวจว่าเลือกเดือนสลิปถูกไหม (งวด 21/7–20/8 = สลิปเดือนสิงหาคม = สะสม 8 เดือน)';
+    } else if(M.bonusPaid){
+      msg += ' (รวมโบนัสที่จ่ายไปแล้ว) · เทียบกับเงินเดือนปัจจุบัน '+fmt(expectMonthly)+' บาท — สมเหตุสมผล';
+    } else {
+      msg += ' · เทียบกับเงินเดือนปัจจุบัน '+fmt(expectMonthly)+' บาท — สมเหตุสมผล';
+    }
+  }
+  el.className=cls; el.innerHTML=msg;
+}
+
+function renderBonusNote(res){
+  var M=res.M, el=$("bonusNote"), bm=Number(S.bonusMonth);
+  if(bm===0){ el.className="note"; el.textContent="ยังไม่ระบุโบนัส — ถ้าคาดว่าจะได้ ให้ใส่กี่เท่าและเดือนที่จ่าย เพื่อดูภาษีที่แท้จริง"; return; }
+  if(M.bonusPaid){
+    el.className="note ok";
+    el.innerHTML='โบนัสเดือน'+MONTHS[bm-1]+'<b>จ่ายไปแล้วก่อนสลิปเดือนนี้</b> จึงรวมอยู่ในยอดรายได้สะสมแล้ว ระบบไม่บวกซ้ำ';
+  } else {
+    el.className="note";
+    el.innerHTML='โบนัส <b>'+fmt(num(S.bonusAmt))+'</b> บาท จะบวกเข้าเดือน'+MONTHS[bm-1]+' ซึ่งยังมาไม่ถึง';
+  }
+}
+
+function renderPvdNote(res){
+  var M=res.M, el=$("pvdNote");
+  if(num(S.pvdPct)>PVD_MAX_PCT || (M.hasChange && num(S.pvdNewPct)>PVD_MAX_PCT)){
+    el.className="note flag";
+    el.innerHTML='<b>หักได้สูงสุด '+PVD_MAX_PCT+'% ของเงินเดือน</b> — ระบบคิดให้ที่ '+PVD_MAX_PCT+'% ส่วนที่เกินใช้ลดหย่อนไม่ได้';
+    return;
+  }
+  if(M.changeIsPast){
+    el.className="note flag";
+    el.innerHTML='เดือน'+MONTHS[M.chgM-1]+'<b>ผ่านไปแล้ว</b> การเปลี่ยนอัตรารอบนั้นอยู่ในยอดกองทุนสำรองเลี้ยงชีพสะสมเรียบร้อย '
+      +'ให้ใส่อัตราหลังเปลี่ยนในช่อง “อัตราที่หักตอนนี้” แล้วเว้นสองช่องนี้ว่างไว้';
+    return;
+  }
+  if(M.remain<=0 || num(S.salaryNow)<=0){
+    el.className="note";
+    el.innerHTML='ยอดสะสมครอบคลุมทั้งปีแล้ว การเปลี่ยนอัตราที่ผ่านมารวมอยู่ในยอดนั้นเรียบร้อย';
+    return;
+  }
+  if(M.hasChange){
+    el.className="note ok";
+    var base=compute(0).tax;
+    var alt=(function(){ var keep=S.pvdNewPct; S.pvdNewPct=""; var t=compute(0).tax; S.pvdNewPct=keep; return t; })();
+    var d=alt-base;
+    el.innerHTML='คิด '+M.pvdRate+'% ถึงเดือน'+MONTHS[M.chgM-2>=0?M.chgM-2:11]+' แล้วเปลี่ยนเป็น <b>'+M.pvdRateNew+'%</b> '
+      +'ตั้งแต่เดือน'+MONTHS[M.chgM-1]
+      +(d>0 ? ' · ประหยัดภาษีปีนี้เพิ่ม <b>'+fmt(d)+'</b> บาทเทียบกับไม่เปลี่ยน' : '');
+    return;
+  }
+  var head = PVD_MAX_PCT - M.pvdRate;
+  if(head<=0){
+    el.className="note ok";
+    el.innerHTML='หักเต็มเพดาน '+PVD_MAX_PCT+'% แล้ว ลดหย่อนส่วนนี้ใช้ได้เต็มที่';
+    return;
+  }
+  var nextChance = M.slipM<4 ? 4 : 0;   /* รอบเปลี่ยนอัตราของบริษัทคือเดือน 4 */
+  var startM = nextChance || (M.slipM+1);
+  var mCount = 12-startM+1;
+  var addDed = num(S.salaryNow)*head/100*mCount;
+  var saved  = res.tax - compute(addDed).tax;
+  el.className="note";
+  el.innerHTML='ตอนนี้หัก '+M.pvdRate+'% · ถ้าเปลี่ยนเป็น <b>'+PVD_MAX_PCT+'%</b> ตั้งแต่เดือน'+MONTHS[startM-1]
+    +' จะได้ลดหย่อนเพิ่ม <b>'+fmt(addDed)+'</b> บาท ประหยัดภาษีปีนี้ราว <b>'+fmt(saved)+'</b> บาท '
+    +'(เงินก้อนนี้ยังเป็นของคุณ แค่ถอนได้ตอนออกจากงาน) — กรอกสองช่องข้างบนเพื่อคิดรวมในประมาณการ';
+}
+
+function render(){
+  var res=compute();
+  renderChecks(res); renderBonusNote(res); renderBreakdown(res); renderPvdNote(res);
+
+  $("rTax").textContent=fmt(res.tax);
+  $("rGross").textContent=fmt(res.gross);
+  $("rExp").textContent="−"+fmt(res.expense);
+  $("rDed").textContent="−"+fmt(res.ded);
+  $("rNet").textContent=fmt(res.net);
+  $("rEff").textContent=(res.gross>0?(res.tax/res.gross*100):0).toFixed(2)+"%";
+  $("rWht").textContent=fmt(res.wht);
+  $("rPerMonth").textContent=fmt(res.tax/12);
+
+  var diff=res.tax-res.wht, v=$("rVerdict");
+  if(diff>=0){ v.className="verdict pay";
+    v.innerHTML='<span class="tag">จ่ายเพิ่ม</span><span class="txt">ต้องจ่ายเพิ่มตอนยื่นแบบ <b class="num">'+fmt(diff)+'</b> บาท</span>'; }
+  else { v.className="verdict refund";
+    v.innerHTML='<span class="tag">ขอคืน</span><span class="txt">ขอคืนภาษีได้ <b class="num">'+fmt(-diff)+'</b> บาท</span>'; }
+
+  var marg=renderLadder(res);
+  renderHeadroom(res);
+
+  var ex=num(S.extra);
+  $("extraV").textContent=fmt(ex);
+  $("saveV").textContent="ประหยัด "+fmt(ex>0 ? res.tax-compute(ex).tax : 0)+" บาท";
+  $("margRate").textContent=(marg*100).toFixed(0)+"%";
+
+  var as=$("auto_sso"), ap=$("auto_pvd");
+  if(as) as.value=Math.round(res.caps.sso);
+  if(ap) ap.value=Math.round(res.caps.pvd);
+}
+
+/* ---------- wiring ---------- */
+function bind(id, after){
+  var el=$(id);
+  function upd(){
+    S[id] = (el.tagName==="SELECT") ? Number(el.value) : num(el.value);
+    if(after) after();
+    save(); render();
+  }
+  el.addEventListener("input", upd); el.addEventListener("change", upd);
+}
+function syncBonus(){
+  if(num(S.bonusX)>0 && num(S.salaryNow)>0){
+    S.bonusAmt = Math.round(num(S.bonusX)*num(S.salaryNow));
+    $("bonusAmt").value = S.bonusAmt;
+  }
+}
+
+S=load();
+fillSelects();
+renderDeductions();
+syncInputs();
+render();
+
+["taxYear","slipMonth","ytdIncome","ytdPvd","ytdSso","ytdWht","otherMonthly","extraIncome",
+ "bonusMonth","bonusAmt","ssoPct","ssoCap","whtMonthly","extra"]
+  .forEach(function(id){ bind(id); });
+bind("pvdPct");
+bind("pvdChangeMonth");
+(function(){                      /* เว้นว่าง = ไม่เปลี่ยนอัตรา ต้องแยกจากเลข 0 */
+  var el=$("pvdNewPct");
+  function upd(){ S.pvdNewPct = (el.value==="") ? "" : num(el.value); save(); render(); }
+  el.addEventListener("input", upd); el.addEventListener("change", upd);
+})();
+bind("salaryNow", syncBonus);
+bind("bonusX", syncBonus);
+
+$("resetBtn").addEventListener("click", function(){
+  if(!confirm("ล้างข้อมูลทั้งหมดและเริ่มใหม่?")) return;
+  S=defaults(); save(); syncInputs(); renderDeductions(); render();
+});
+
+})();
+</script>
+
+</body>
+</html>
